@@ -34,7 +34,7 @@ namespace UnityEditor
         {
             EditorGUI.BeginChangeCheck();
 
-            m_FeatureSize = EditorGUILayout.Slider(new GUIContent("Terrace Count", "Larger value will enhance larger features, smaller values will enhance smaller features"), m_FeatureSize, 1.0f, 300.0f);
+            m_FeatureSize = EditorGUILayout.Slider(new GUIContent("Terrace Count", "Larger value will result in more terraces"), m_FeatureSize, 1.0f, 300.0f);
 
             if (EditorGUI.EndChangeCheck())
                 Save(true);
