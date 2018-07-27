@@ -18,7 +18,7 @@ namespace UnityEditor
 
         public override string GetName()
         {
-            return "stuff/Terrace Erosion";
+            return "Erosion/Terrace Erosion";
         }
 
         public override string GetDesc()
