@@ -58,20 +58,19 @@ namespace UnityEditor
                 Save(true);
         }
 
-        /*
         private Vector2 transformToWorld(Terrain t, Vector2 uvs)
         {
-            Debug.Log(t.terrainData.size);
             Vector3 tilePos = t.GetPosition();
-
-            return new Vector2(tilePos.x, tilePos.z) + uvs * new Vector2(t.terrainData.size.x, t.terrainData.size.y);
+            //Debug.Log(t.terrainData.size);
+            return new Vector2(tilePos.x, tilePos.z) + uvs * new Vector2(t.terrainData.size.x, t.terrainData.size.z);
         }
 
-        private Terrain getTileFromWorldPos(Vector2 xz)
-        {
-            
+        private Vector2 transformToUVSpace(Terrain originTile, Vector2 worldPos) {
+            Vector3 originTilePos = originTile.GetPosition();
+            Vector2 uvPos = new Vector2((worldPos.x - originTilePos.x) / originTile.terrainData.size.x,
+                                        (worldPos.y - originTilePos.z) / originTile.terrainData.size.z);
+            return uvPos;
         }
-        */
 
         public override bool Paint(Terrain terrain, Texture brushTexture, Vector2 uv, float brushStrength, int brushSize, float brushRotation = 0.0f)
         {
@@ -81,31 +80,36 @@ namespace UnityEditor
                 //m_Height = terrain.terrainData.GetInterpolatedHeight(uv.x, uv.y) / terrain.terrainData.size.y;
                 float height = terrain.terrainData.GetInterpolatedHeight(uv.x, uv.y) / terrain.terrainData.size.y;
                 m_StartPoint = new Vector3(uv.x, uv.y, height);
-                Debug.Log(m_StartPoint);
-                //Debug.Log(transformToWorld(terrain, uv));
+                m_StartTerrain = terrain;
                 return true;
             }
 
-            //don't allow dragging for this tool
-            if (Event.current.type == EventType.MouseDrag)
-            {
-                return false;
+            if (!m_StartTerrain || (Event.current.type == EventType.MouseDrag)) {
+                return true;
             }
 
             //get the target position & height
             float targetHeight = terrain.terrainData.GetInterpolatedHeight(uv.x, uv.y) / terrain.terrainData.size.y;
             Vector3 targetPos = new Vector3(uv.x, uv.y, targetHeight);
-            Debug.Log(targetPos);
+
+            if (terrain != m_StartTerrain) {
+                //figure out the stroke vector in uv,height space
+                Vector2 targetWorld = transformToWorld(terrain, uv);
+                Vector2 targetUVs = transformToUVSpace(m_StartTerrain, targetWorld);
+                targetPos.x = targetUVs.x;
+                targetPos.y = targetUVs.y;
+            }
 
             Vector3 stroke = targetPos - m_StartPoint;
             float strokeLength = stroke.magnitude;
             int numSplats = (int)(strokeLength / (0.001f * m_Spacing));
 
+            Terrain currTerrain = m_StartTerrain;
             Material mat = GetPaintMaterial();
 
+            Vector2 posOffset = new Vector2(0.0f, 0.0f);
             for(int i = 0; i < numSplats; i++)
             {
-                Debug.Log(i);
                 float pct = (float)i / (float)numSplats;
 
                 float widthScale = widthProfile.Evaluate(pct);
@@ -113,14 +117,37 @@ namespace UnityEditor
                 float strengthScale = strengthProfile.Evaluate(pct);
 
                 Vector3 currPos = m_StartPoint + pct * stroke;
+                currPos.x += posOffset.x;
+                currPos.y += posOffset.y;
+
+                if (currPos.x >= 1.0f && (currTerrain.rightNeighbor != null)) {
+                    currTerrain = currTerrain.rightNeighbor;
+                    currPos.x -= 1.0f;
+                    posOffset.x -= 1.0f;
+                }
+                if(currPos.x <= 0.0f && (currTerrain.leftNeighbor != null)) {
+                    currTerrain = currTerrain.leftNeighbor;
+                    currPos.x += 1.0f;
+                    posOffset.x += 1.0f;
+                }
+                if(currPos.y >= 1.0f && (currTerrain.topNeighbor != null)) {
+                    currTerrain = currTerrain.topNeighbor;
+                    currPos.y -= 1.0f;
+                    posOffset.y -= 1.0f;
+                }
+                if(currPos.y <= 0.0f && (currTerrain.bottomNeighbor != null)) {
+                    currTerrain = currTerrain.bottomNeighbor;
+                    currPos.y += 1.0f;
+                    posOffset.y += 1.0f;
+                }
+
                 Vector2 currUV = new Vector2(currPos.x, currPos.y);
 
                 int finalBrushSize = (int)(widthScale * (float)brushSize);
                 float finalHeight = (m_StartPoint + heightScale * stroke).z;
-                
 
-                Rect brushRect = TerrainPaintUtility.CalculateBrushRect(terrain, currUV, finalBrushSize, brushRotation);
-                TerrainPaintUtility.PaintContext paintContext = TerrainPaintUtility.BeginPaintHeightmap(terrain, brushRect, "Terrain Paint - Bridge");
+                Rect brushRect = TerrainPaintUtility.CalculateBrushRect(currTerrain, currUV, finalBrushSize, brushRotation);
+                TerrainPaintUtility.PaintContext paintContext = TerrainPaintUtility.BeginPaintHeightmap(currTerrain, brushRect, "Terrain Paint - Bridge");
 
                 Vector4 brushParams = new Vector4(strengthScale * brushStrength * 0.01f, 0.5f * finalHeight, 0.0f, brushRotation);
                 mat.SetTexture("_BrushTex", brushTexture);
