@@ -1,0 +1,10 @@
+{
+    "name": "com.unity.terrain-brushes.Editor",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
