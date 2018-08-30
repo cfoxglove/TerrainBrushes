@@ -189,11 +189,11 @@ namespace UnityEditor.Experimental.TerrainAPI
             read.brushRect = new RectInt(write.brushRect.position + m_CloneRectPixelOffsetFromStampRect, write.brushRect.size);
 
             // TODO(wyatt): Uncomment this once Andrew's API changes make it to trunk
-            // read.CreateTerrainTiles(m_Sample.m_Terrain,
-            //     m_Sample.m_Terrain.terrainData.heightmapWidth,
-            //     m_Sample.m_Terrain.terrainData.heightmapHeight);
-            // read.CreateRenderTargets(m_Sample.m_Terrain.terrainData.heightmapTexture.format);
-            // read.GatherHeightmap(m_Sample.m_Terrain, null);
+            read.CreateTerrainTiles(m_Sample.m_Terrain,
+                m_Sample.m_Terrain.terrainData.heightmapWidth,
+                m_Sample.m_Terrain.terrainData.heightmapHeight);
+            read.CreateRenderTargets(m_Sample.m_Terrain.terrainData.heightmapTexture.format);
+            read.GatherHeightmap(m_Sample.m_Terrain);
 
             // render mix of clone and stamp areas
             StampRender(read, write, mat, (int)ShaderPasses.CloneHeightmap);
@@ -220,11 +220,11 @@ namespace UnityEditor.Experimental.TerrainAPI
                 read.brushRect = new RectInt(write.brushRect.position + m_CloneRectPixelOffsetFromStampRect, write.brushRect.size);
                 
                 // TODO(wyatt): Uncomment this once Andrew's API changes make it to trunk
-                // read.CreateTerrainTiles(m_Sample.m_Terrain,
-                //     m_Sample.m_Terrain.terrainData.alphamapWidth,
-                //     m_Sample.m_Terrain.terrainData.alphamapHeight);
-                // read.CreateRenderTargets(RenderTextureFormat.R8);
-                // read.GatherAlphamap(m_Sample.m_Terrain, null, m_Sample.m_Terrain.terrainData.terrainLayers[i], false);
+                read.CreateTerrainTiles(m_Sample.m_Terrain,
+                    m_Sample.m_Terrain.terrainData.alphamapWidth,
+                    m_Sample.m_Terrain.terrainData.alphamapHeight);
+                read.CreateRenderTargets(RenderTextureFormat.R8);
+                read.GatherAlphamap(m_Sample.m_Terrain, m_Sample.m_Terrain.terrainData.terrainLayers[i], false);
 
                 // render mix of clone and stamp areas
                 StampRender(read, write, mat, (int)ShaderPasses.CloneAlphamap);

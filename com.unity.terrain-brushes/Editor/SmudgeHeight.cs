@@ -55,10 +55,10 @@ namespace UnityEditor.Experimental.TerrainAPI
         {
             if(Event.current.type == EventType.MouseDown)
             {
-                Debug.Log("Begin Stroke");
                 m_PrevBrushPos = editContext.uv;
                 return false;
             }
+            
             if (Event.current.type == EventType.MouseDrag && m_PreviousEvent == EventType.MouseDrag) 
             {
                 Rect brushRect = TerrainPaintUtility.CalculateBrushRectInTerrainUnits(terrain, editContext.uv, editContext.brushSize);
